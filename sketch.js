@@ -86,19 +86,37 @@ function randomizeParams() {
     params.frequency = floor(random(1, 20));
     params.rotation = random([0, 90, 180, 270]);
   }
+
   if (params.mode === "Circles") {
     params.circleCount = floor(random(5, 60));
   }
+
   if (params.mode === "Truchet") {
     params.tileCount = floor(random(5, 51)); // now up to 50
     params.waveStrength = random(0.5, 2.0); // now up to 2.0
+
+    // ✅ Randomize tileShape and waveType
+    const shapes = ["Arc", "Line", "Bezier"];
+    const waveTypes = [
+      "Sine",
+      "Perlin",
+      "Spiral",
+      "Radial",
+      "Linear",
+      "Circular",
+      "Mix",
+    ];
+    params.tileShape = random(shapes);
+    params.waveType = random(waveTypes);
   }
+
+  // Common parameter randomizations
   params.strokeMinWeight = floor(random(1, 4));
   params.strokeMaxWeight = floor(random(params.strokeMinWeight + 1, 7));
   params.dashLength = floor(random(4, 20));
   params.gapLength = floor(random(4, 20));
   params.bgColor = getRandomColorFromPalette();
-  params.zoom = random(0.5, 2.0);
+  params.zoom = random(0.5, 3.0);
 
   updateGUI();
   renderArt();
@@ -115,7 +133,7 @@ function createGUI() {
 
   const fCommon = gui.addFolder("Common Settings");
   fCommon
-    .add(params, "zoom", 0.5, 2)
+    .add(params, "zoom", 0.5, 5)
     .step(0.1)
     .name("Zoom")
     .onFinishChange(renderArt);
