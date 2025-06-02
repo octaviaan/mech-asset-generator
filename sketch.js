@@ -13,8 +13,7 @@ let params = {
   bgColor: "#9EDCFF",
   useGridOverlay: true,
   zoom: 1.0,
-  strokeMinWeight: 1,
-  strokeMaxWeight: 6,
+  strokeWeight: 1,
   dashLength: 10,
   gapLength: 10,
   rows: 12,
@@ -36,14 +35,14 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(900, 900);
+  createCanvas(1400, 900);
   createGUI();
   noLoop();
   renderArt();
 }
 
 function createGridPattern() {
-  const pg = createGraphics(900, 900);
+  const pg = createGraphics(1400, 900);
   pg.clear();
   pg.stroke(220, 220, 220, 80);
   pg.strokeWeight(0.8);
@@ -92,10 +91,8 @@ function randomizeParams() {
   }
 
   if (params.mode === "Truchet") {
-    params.tileCount = floor(random(5, 51)); // now up to 50
-    params.waveStrength = random(0.5, 2.0); // now up to 2.0
-
-    // ✅ Randomize tileShape and waveType
+    params.tileCount = floor(random(5, 51));
+    params.waveStrength = random(0.5, 2.0);
     const shapes = ["Arc", "Line", "Bezier"];
     const waveTypes = [
       "Sine",
@@ -110,13 +107,10 @@ function randomizeParams() {
     params.waveType = random(waveTypes);
   }
 
-  // Common parameter randomizations
-  params.strokeMinWeight = floor(random(1, 4));
-  params.strokeMaxWeight = floor(random(params.strokeMinWeight + 1, 7));
   params.dashLength = floor(random(4, 20));
   params.gapLength = floor(random(4, 20));
   params.bgColor = getRandomColorFromPalette();
-  params.zoom = random(0.5, 3.0);
+  params.zoom = random(1.0, 3.0);
 
   updateGUI();
   renderArt();
@@ -133,7 +127,7 @@ function createGUI() {
 
   const fCommon = gui.addFolder("Common Settings");
   fCommon
-    .add(params, "zoom", 0.5, 5)
+    .add(params, "zoom", 1.0, 3.0)
     .step(0.1)
     .name("Zoom")
     .onFinishChange(renderArt);
@@ -142,16 +136,6 @@ function createGUI() {
     .name("Background")
     .onChange(renderArt);
   fCommon.add(params, "useGridOverlay").name("Show Grid").onChange(renderArt);
-  fCommon
-    .add(params, "strokeMinWeight", 1, 10)
-    .step(1)
-    .name("Stroke Min")
-    .onFinishChange(renderArt);
-  fCommon
-    .add(params, "strokeMaxWeight", 1, 10)
-    .step(1)
-    .name("Stroke Max")
-    .onFinishChange(renderArt);
   fCommon.add(params, "dashLength", 1, 50).step(1).onFinishChange(renderArt);
   fCommon.add(params, "gapLength", 1, 50).step(1).onFinishChange(renderArt);
   fCommon.open();
@@ -175,12 +159,12 @@ function createGUI() {
   fCircles.add(params, "circleCount", 3, 50).step(1).onFinishChange(renderArt);
 
   const fTruchet = gui.addFolder("Truchet Settings");
-  fTruchet.add(params, "tileCount", 5, 50).step(1).onFinishChange(renderArt); // now up to 50
+  fTruchet.add(params, "tileCount", 5, 50).step(1).onFinishChange(renderArt);
   fTruchet
     .add(params, "waveStrength", 0.5, 2.0)
     .step(0.1)
     .name("Wave Strength")
-    .onFinishChange(renderArt); // max 2.0
+    .onFinishChange(renderArt);
   fTruchet
     .add(params, "tileShape", ["Arc", "Line", "Bezier"])
     .name("Tile Shape")
@@ -240,7 +224,7 @@ function drawWaves(colors) {
     for (let s = 0; s < params.segments; s++) {
       const mode = random(["bordered", "dashed", "solid"]);
       const strokeCol = random(colors);
-      const strokeW = random(params.strokeMinWeight, params.strokeMaxWeight);
+      const strokeW = 1;
       const points = [];
       const startX = s * segWidth;
       const endX = (s + 1) * segWidth;
@@ -263,7 +247,7 @@ function drawCircles(colors) {
   for (let i = 0; i < params.circleCount; i++) {
     const r = map(i, 0, params.circleCount - 1, 10, maxRadius);
     const strokeCol = colors[i % 2];
-    const strokeW = random(params.strokeMinWeight, params.strokeMaxWeight);
+    const strokeW = 1;
     const dashed = random() < 0.5;
     if (dashed) drawDashedEllipse(cx, cy, r * 2, r * 2, strokeCol, strokeW);
     else drawBorderedEllipse(cx, cy, r * 2, r * 2, strokeCol, strokeW);
@@ -272,49 +256,50 @@ function drawCircles(colors) {
 }
 
 function drawTruchet(colors) {
-  const n = params.tileCount;
-  const size = min(width, height) / n;
-  const offsetX = (width - size * n) / 2;
-  const offsetY = (height - size * n) / 2;
-  for (let y = 0; y < n; y++) {
-    for (let x = 0; x < n; x++) {
-      const px = offsetX + x * size;
-      const py = offsetY + y * size;
+  const cols = params.tileCount;
+  const rows = floor((cols * height) / width);
+  const tileW = width / cols;
+  const tileH = height / rows;
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const px = x * tileW;
+      const py = y * tileH;
       const strokeCol = random(colors);
-      const strokeW = random(params.strokeMinWeight, params.strokeMaxWeight);
+      const strokeW = 1;
       const borderCol = getBorderColor(params.bgColor);
       const borderW = strokeW + 4;
-      const rot = getWaveRotation(x, y, n);
+      const rot = getWaveRotation(x, y, cols);
 
       push();
-      translate(px + size / 2, py + size / 2);
+      translate(px + tileW / 2, py + tileH / 2);
       rotate(rot);
-      translate(-size / 2, -size / 2);
+      translate(-tileW / 2, -tileH / 2);
 
       stroke(borderCol);
       strokeWeight(borderW);
       noFill();
-      drawTruchetTile(size, params.tileShape);
+      drawTruchetTile(tileW, tileH, params.tileShape);
 
       stroke(strokeCol);
       strokeWeight(strokeW);
-      drawTruchetTile(size, params.tileShape);
+      drawTruchetTile(tileW, tileH, params.tileShape);
 
       pop();
     }
   }
 }
 
-function drawTruchetTile(size, type) {
+function drawTruchetTile(w, h, type) {
   switch (type) {
     case "Arc":
-      arc(0, 0, size * 2, size * 2, 0, HALF_PI);
+      arc(0, 0, w * 2, h * 2, 0, HALF_PI);
       break;
     case "Line":
-      line(0, 0, size, size);
+      line(0, 0, w, h);
       break;
     case "Bezier":
-      bezier(0, size, size * 0.5, 0, size * 0.5, size, size, 0);
+      bezier(0, h, w * 0.5, 0, w * 0.5, h, w, 0);
       break;
   }
 }
